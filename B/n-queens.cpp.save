@@ -1,0 +1,60 @@
+#include<iostream>
+using namespace std;
+#define SIZE 4
+int count=4;
+struct{
+	int r,c;
+}q[4];
+
+int checkRow(int idx,int data[]){
+	for(int i=0;i<SIZE;i++){
+		if(data[idx][i]==1){
+			return 1;
+		}
+	}
+	return 0;
+}
+
+int main(){
+
+	int i=0,j=0,k=0;
+	int board[SIZE][SIZE];
+
+	//initialize all to -1
+	for(int i=0;i<SIZE;i++){
+		q[i].r=(-1) , q[i].c=(-1);
+	}
+
+	for(i=0;i<SIZE;i++)
+		for(j=0;j<SIZE;j++){
+			board[i][j]=(-1);
+	}
+
+	i=0,j=0;
+	//start here
+	while(count!=0 && j<SIZE){
+		if(board[i][j]==(-1)){
+                        cout<<"case-r1 : "<<i<<" case-c1 : "<<j<<endl;
+			q[k].r=i , q[k].c=j , k+=1 , j+=1 , i+=1;
+			board[i][j]=1;
+		}
+
+		while(j<SIZE){
+			if(q[k-1].r==(i-1) && q[k-1].c==(j-1)){
+				i++;
+			}
+			else{
+				q[k].r=i , q[k].c=j , k+=1;
+				board[i][j]=1;
+				cout<<"case-r2 : "<<i<<" case-c2 : "<<j<<endl;
+				break;
+			}
+		}
+		count-=1;
+		cout<<"count : "<<count<<endl;
+		i=0;
+		j+=1;
+	}
+
+	return 0;
+}
