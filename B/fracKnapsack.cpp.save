@@ -1,0 +1,68 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+struct item_format{
+	int profit,weight,ratio;
+};
+
+void sortRatio(vector<item_format*> &v1){
+
+	item_format *p1=NULL,*p2=NULL,*temp=NULL;
+
+	for(int i=0;i<v1.size();i++){
+		p1=v1[i];
+		for(int j=1;j<v1.size()-1;j++){
+			p2=v1[j];
+			if((p1->ratio)>(p2->ratio)){
+				temp=p1;
+				p1=p2;
+				p2=temp;
+					cout<<p1->ratio<<"  "<<p2->ratio<<"\n";
+			}
+		}
+	}
+}
+
+void calculateRatio(vector<item_format*> &v1){
+
+	vector<item_format*>::iterator s=v1.begin();
+	while(s!=v1.end()){
+		(*s)->ratio=((*s)->profit)/((*s)->weight);
+		s++;
+	}
+}
+int main(){
+
+int w,n;
+cout<<"Enter no of items : ";
+cin>>n;
+
+cout<<"Enter total weight : ";
+cin>>w;
+
+vector<struct item_format*> items;
+struct item_format p[n];
+
+for(int i=0;i<n;i++){
+
+	cout<<i<<"--->"<<endl;
+	cout<<"Enter weight : ";
+	cin>>p[i].weight;
+	cout<<"Enter profit : ";
+	cin>>p[i].profit;
+
+	items.push_back(&p[i]);
+}
+
+calculateRatio(items);
+sortRatio(items);
+
+for(int i=0;i<n;i++){
+
+	cout<<items[i]->ratio<<"\n";
+}
+
+return 0;
+
+}

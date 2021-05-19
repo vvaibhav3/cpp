@@ -6,10 +6,12 @@
 #include <fstream>
 #include <string.h>
 #include <algorithm>
+#include <iomanip>
 #define SIZE 1024
 using namespace std;
 
-#define incr(x) x += 1
+#define ARROW "---------"
+#define BR "\n--------------------------------\n"
 
 #define BLACK "\033[1;30m"
 #define RED "\033[1;31m"
@@ -58,8 +60,13 @@ struct rtable
 //for intermediate code format
 struct ICformat
 {
-    string type1, type2, regNo;
+    char type1[SIZE], type2[SIZE], regNo;
     int lc, code1, code2;
+};
+
+struct TCformat
+{
+    int lc, code1, regNo, addr;
 };
 
 class PASS1
@@ -80,7 +87,7 @@ public:
     void showPrgm(string);
     mtable *findMdata(char, string);
     ptable *findPdata(char, string);
-    rtable *findRdata(char);
+    rtable *findRdata(char, string);
     LStable *findSymbol(string);
     LStable *findLitral(string);
     void insertSymbol(int, string, int);
@@ -89,6 +96,9 @@ public:
     void showTables();
     void buffer(int, string, int, int, string, int);
     void showBuffer();
+
+    int getSymbolAddr(int);
+    int getLitralAddr(int);
 
     void UndefineError()
     {
@@ -102,17 +112,36 @@ public:
     {
         for (vector<LStable>::iterator j = symtb.begin(); j != symtb.end(); j++)
         {
-            cout << j->lsidx << " " << j->name << " " << j->addr << endl;
+            cout << setw(5) << j->lsidx << " " << setw(5) << j->name << " " << setw(5) << j->addr << endl;
         }
     }
 
     void showLitrTab()
     {
+
         for (vector<LStable>::iterator j = litrtb.begin(); j != litrtb.end(); j++)
         {
-            cout << j->lsidx << " " << j->name << " " << j->addr << endl;
+            cout << setw(5) << j->lsidx << " " << setw(5) << j->name << " " << setw(5) << j->addr << endl;
         }
     }
+
+    void showPoolTab()
+    {
+        int i = 0;
+        for (vector<int>::iterator j = pooltb.begin(); j != pooltb.end() - 1; j++)
+        {
+            i++;
+            cout << setw(5) << i << setw(5) << " #" << *j << endl;
+        }
+    }
+};
+
+class PASS2 : public PASS1
+{
+    vector<TCformat> tc;
+public:
+    void genTargetCode();
+    void showTargetCode();
 };
 
 PASS1::PASS1()
@@ -231,12 +260,12 @@ ptable *PASS1::findPdata(char ch, string s)
     return NULL;
 }
 
-rtable *PASS1::findRdata(char ch)
+rtable *PASS1::findRdata(char ch, string regName)
 {
     int key = (ch % 65);
     map<int, struct rtable *>::iterator res;
     res = rt.find(key);
-    if (res != rt.end())
+    if (res != rt.end() && res->second->rname == regName)
         return res->second;
 
     return NULL;
@@ -255,7 +284,6 @@ LStable *PASS1::findLitral(string data)
 
 LStable *PASS1::findSymbol(string data)
 {
-
     for (vector<LStable>::iterator j = symtb.begin(); j != symtb.end(); j++)
     {
 
@@ -298,38 +326,149 @@ void PASS1::insertAtPool(int idx, int &lc)
 
 void PASS1::showTables()
 {
-    cout << RED << "Symbol Table : \n"
-         << RESET;
+    cout << RED << ARROW << " Symbol Table " << ARROW
+         << RESET << endl;
     showSymTab();
-    cout << RED << "Litral Table : \n"
-         << RESET;
+
+    cout << RED << BR << RESET << endl;
+    cout << RED << ARROW << " Litral Table " << ARROW
+         << RESET << endl;
     showLitrTab();
+
+    cout << RED << BR << RESET << endl;
+
+    cout << RED << ARROW << " Pool Table " << ARROW
+         << RESET << endl;
+
+    showPoolTab();
+    cout << RED << BR << RESET << endl;
+    
 }
 
 void PASS1::buffer(int lc, string cls, int code, int regNo, string type, int cnst)
 {
     struct ICformat ictemp;
-    ictemp.lc = lc, ictemp.type1 = cls, ictemp.code1 = code, ictemp.regNo = regNo, ictemp.type2 = type, ictemp.code2 = cnst;
+    ictemp.lc = lc, strcpy(ictemp.type1, cls.c_str()), ictemp.code1 = code, ictemp.regNo = regNo, strcpy(ictemp.type2, type.c_str()), ictemp.code2 = cnst;
     buf.push_back(ictemp);
 }
 
 void PASS1::showBuffer()
 {
+    ofstream ofs;
+    ofs.open("output.dat", ios::binary);
     for (vector<ICformat>::iterator j = buf.begin(); j != buf.end(); j++)
     {
         if (j->code2 == 45)
         {
             cout << GREEN << "\n"
-                 << j->lc << " " << j->type1 << " " << j->code1 << " " << j->regNo << " " << j->type2 << " " << (char)j->code2
+                 << setw(5) << j->lc << " " << setw(5) << j->type1 << " " << setw(5) << j->code1 << " " << setw(5) << j->regNo << " " << setw(5) << j->type2 << " " << setw(5) << (char)j->code2
                  << RESET;
         }
         else
         {
             cout << GREEN << "\n"
-                 << j->lc << " " << j->type1 << " " << j->code1 << " " << j->regNo << " " << j->type2 << " " << j->code2
+                 << setw(5) << j->lc << " " << setw(5) << j->type1 << " " << setw(5) << j->code1 << " " << setw(5) << j->regNo << " " << setw(5) << j->type2 << " " << setw(5) << j->code2
+                 << RESET;
+        }
+        ofs.write((char *)&(*j), sizeof(ICformat));
+    }
+
+    cout<<endl;
+}
+
+int PASS1::getSymbolAddr(int sidx)
+{
+    for (vector<LStable>::iterator j = symtb.begin(); j != symtb.end(); j++)
+    {
+        //cout << j->lsidx << endl;
+        if (j->lsidx == sidx)
+            return j->addr;
+    }
+    return -1;
+}
+
+int PASS1::getLitralAddr(int lidx)
+{
+    for (vector<LStable>::iterator j = litrtb.begin(); j != litrtb.end(); j++)
+    {
+        //cout << j->lsidx << endl;
+        if (j->lsidx == lidx)
+            return j->addr;
+    }
+    return -1;
+}
+
+void PASS2::genTargetCode()
+{
+    ifstream ifs; // stream for reading target code
+    ifs.open("output.dat", ios::in | ios::binary);
+    ICformat ic;
+    TCformat temp;
+    for (ifs.read((char *)&ic, sizeof(ICformat)); !ifs.eof(); ifs.read((char *)&ic, sizeof(ICformat)))
+    {
+        //cout<<ic.lc<<" "<<ic.type1<<" "<<ic.code1<<" "<<ic.regNo<<" "<<ic.type2<<" "<<ic.code2<<endl;
+        if (!strcmp(ic.type1, "AD"))
+        {
+            temp.lc = ic.lc, temp.code1 = '-', temp.regNo = '-', temp.addr = '-';
+            tc.push_back(temp);
+        }
+        else
+        {
+            int addr = -1;
+            if (!strcmp(ic.type2, "S"))
+            {
+                addr = getSymbolAddr(ic.code2);
+                if (addr == -1)
+                {
+                    cout << RED << "ERROR : { Symbol at loation : \"" << ic.lc << "\" not defined.. }" << RESET << endl;
+                    break;
+                }
+                temp.lc = ic.lc, temp.code1 = ic.code1, temp.regNo = ic.regNo, temp.addr = addr;
+            }
+
+            if (!strcmp(ic.type2, "L"))
+            {
+                addr = getLitralAddr(ic.code2);
+                temp.lc = ic.lc, temp.code1 = ic.code1, temp.regNo = ic.regNo, temp.addr = addr;
+            }
+
+            if (!strcmp(ic.type2, "C"))
+            {
+                temp.lc = ic.lc, temp.code1 = '-', temp.regNo = '-', temp.addr = ic.code2;
+            }
+
+            tc.push_back(temp);
+        }
+    }
+}
+
+void PASS2::showTargetCode(){
+
+
+    cout << RED << ARROW << " Target code " << ARROW
+         << RESET << endl;
+
+    for (vector<TCformat>::iterator j = tc.begin(); j != tc.end(); j++)
+    {
+        if (j->code1 == 45)
+        {
+            cout << GREEN << "\n"
+                 << setw(5) << j->lc << " " << setw(5) << (char)j->code1 << " " << setw(5) <<(char)j->regNo << " ";
+                 
+                if(j->addr==45)
+                    cout << setw(5) <<(char) j->addr;
+                else
+                    cout << setw(5) << j->addr;
+                 cout<< RESET;
+        }
+        else
+        {
+            cout << GREEN << "\n"
+                 << setw(5) << j->lc << " " << setw(5) << j->code1 << " " << setw(5) << (char)j->regNo << " " << setw(5) << j->addr
                  << RESET;
         }
     }
+    cout<<endl;
 }
 
 int main(int argc, char const *argv[])
@@ -339,10 +478,10 @@ int main(int argc, char const *argv[])
         cout << "\033[1;31mPLEASE ENTER FILE NAME \033[0m\n";
         return 0;
     }
-    PASS1 p;
+    PASS2 p;
 
     string fileName = argv[1]; //getting prgm name from cmd line
-    p.showPrgm(fileName);      //displying prgm
+    //p.showPrgm(fileName);      //displying prgm
 
     struct data s; //for getting record from file
 
@@ -405,6 +544,14 @@ int main(int argc, char const *argv[])
             }
             else
             {
+
+                if ((stemp->addr != -1 && !strcmp(s.mnemonic, "DS")) || (stemp->addr != -1 && !strcmp(s.mnemonic, "DC")))
+                {
+                    cout << RED << "ERROR :  { \"" << s.lable << "\"  already defined... }\n"
+                         << RESET;
+                    return 0;
+                }
+
                 stemp->addr = lc;
             }
         }
@@ -422,31 +569,44 @@ int main(int argc, char const *argv[])
             else if (!strcmp(s.mnemonic, "DS"))
             {
                 stemp = p.findSymbol(s.lable);
-                p.buffer(lc, mtemp->mclass, mtemp->mcode, '-', "-", '-');
+                p.buffer(lc, mtemp->mclass, mtemp->mcode, '-', "C", stoi(s.op2));
                 lc += stoi(s.op2);
                 lc -= 1;
             }
             else if (s.op2[0] == '=')
             {
-                rtemp = p.findRdata(s.op1[0]);
+                rtemp = p.findRdata(s.op1[0], s.op1);
+                if (rtemp == NULL)
+                {
 
-                p.buffer(lc, mtemp->mclass, mtemp->mcode, rtemp->ridx, "L", ltab);
+                    cout << RED << "ERROR :  { Register \"" << s.op1 << "\" not found... }\n"
+                         << RESET;
+                    return 0;
+                }
+                p.buffer(lc, mtemp->mclass, mtemp->mcode, '0' + rtemp->ridx, "L", ltab);
                 p.insertLitral(ltab, s.op2, -1);
                 ltab += 1;
             }
             else
             {
-                rtemp = p.findRdata(s.op1[0]);
+                rtemp = p.findRdata(s.op1[0], s.op1);
+                if (rtemp == NULL)
+                {
+
+                    cout << RED << "ERROR :  { Register \"" << s.op1 << "\" not found... }\n"
+                         << RESET;
+                    return 0;
+                }
                 stemp = p.findSymbol(s.op2);
                 if (stemp == NULL)
                 {
                     p.insertSymbol(stab, s.op2, -1);
-                    p.buffer(lc, mtemp->mclass, mtemp->mcode, rtemp->ridx, "S", stab);
+                    p.buffer(lc, mtemp->mclass, mtemp->mcode, '0' + rtemp->ridx, "S", stab);
                     stab += 1;
                 }
                 else
                 {
-                    p.buffer(lc, mtemp->mclass, mtemp->mcode, rtemp->ridx, "S", stemp->lsidx);
+                    p.buffer(lc, mtemp->mclass, mtemp->mcode, '0' + rtemp->ridx, "S", stemp->lsidx);
                 }
             }
             lc += 1;
@@ -460,6 +620,7 @@ int main(int argc, char const *argv[])
             if (!strcmp(s.mnemonic, "LTORG"))
             {
                 // cout << "ptab : " << ptab << endl;
+                p.buffer(lc, ptemp->pclass, ptemp->pcode, '-', "-", '-');
                 p.insertAtPool(ptab, lc);
                 // p.showTables();
                 ptab += 1;
@@ -468,7 +629,6 @@ int main(int argc, char const *argv[])
             {
                 string label = s.op2;
                 string value, opr;
-
                 int x = -1;
                 if (label.find("+", 0) != -1)
                 {
@@ -554,20 +714,31 @@ int main(int argc, char const *argv[])
         {
             cout << RED << "ERROR :  { Mnemonic \"" << s.mnemonic << "\" not found... }\n"
                  << RESET;
+            return 0;
         }
     }
 
     //processing end statement
-
+    if (strcmp(s.mnemonic, "END") != 0)
+    {
+        cout << RED << "ERROR :  { Mnemonic \"" << s.mnemonic << "\" not found... }\n"
+             << RESET;
+        return 0;
+    }
     ptemp = p.findPdata(s.mnemonic[0], s.mnemonic);
     p.buffer(0, ptemp->pclass, ptemp->pcode, '-', "-", '-');
 
     p.insertAtPool(ptab, lc);
     p.showTables();
-    p.UndefineError();
+    //p.UndefineError();
+
     //displying intermediate code
     p.showBuffer();
     cout << endl;
+
+    // PASS2 p2;
+    p.genTargetCode();
+    p.showTargetCode();
     //***********tests***********
     // cout<<argc<<endl;
     // cout<<argv[1];
