@@ -1,59 +1,67 @@
-/* C++ implementation of QuickSort */
-#include <bits/stdc++.h>
-using namespace std; 
+#include <iostream>
+using namespace std;
+void print_data(int[],int);
+void quick_sort(int[],int,int);
 
-void swap(int* a, int* b) 
-{ 
-	int t = *a; 
-	*a = *b; 
-	*b = t; 
-} 
+void quick_sort(int data[],int l,int h){
 
-int partition (int arr[], int low, int high) 
-{ 
-	int pivot = arr[high]; 
-	int i = (low - 1); 
+	int start,end,pvt,temp;
+	start=l;
+	end=h;
+	pvt=start;
+	while(start<end){
 
-	for (int j = low; j <= high - 1; j++) 
-	{ 
-		// If current element is smaller than the pivot 
-		if (arr[j] < pivot) 
-		{ 
-			i++; // increment index of smaller element 
-			swap(&arr[i], &arr[j]); 
-		} 
-	} 
-	swap(&arr[i + 1], &arr[high]); 
-	return (i + 1); 
-} 
+		while(data[start]<=data[pvt]){
+			start++;
+		}
 
-void quickSort(int arr[], int low, int high) 
-{ 
-	if (low < high) 
-	{ 
-	
-		int pi = partition(arr, low, high); 
-		quickSort(arr, low, pi - 1); 
-		quickSort(arr, pi + 1, high); 
-	} 
-} 
+		while(data[end]>data[pvt]){
+			end--;
+		}
 
-/* Function to print an array */
-void printArray(int arr[], int size) 
-{ 
-	int i; 
-	for (i = 0; i < size; i++) 
-		cout << arr[i] << " "; 
-	cout << endl; 
-} 
+		if(start<end){
+			temp=data[start];
+			data[start]=data[end];
+			data[end]=temp;
+		}
+		print_data(data,h);
+	}
 
-// Driver Code
-int main() 
-{ 
-	int arr[] = {10, 7, 8, 9, 1, 5}; 
-	int n = sizeof(arr) / sizeof(arr[0]); 
-	quickSort(arr, 0, n - 1); 
-	cout << "Sorted array: \n"; 
-	printArray(arr, n); 
-	return 0; 
+	if(l<h){
+
+	temp=data[end];
+	data[end]=data[pvt];
+	data[pvt]=temp;
+	//cout<<"\nend : "<<end<<" : "<<data[end]<<"\n";
+	quick_sort(data,l,end-1);
+	quick_sort(data,end+1,h);
+
+	}
+}
+
+void print_data(int data[],int n){
+
+	for(int i=0;i<n;i++){
+		cout<<data[i]<<"\t";
+	}
+	cout<<"\n";
+}
+
+int main(){
+
+int n;
+cout<<"Enter size of list : ";
+cin>>n;
+
+int list[n];
+
+cout<<"Enter items : \n";
+
+for(int i=0;i<n;i++)
+	cin>>list[i];
+
+quick_sort(list,0,n-1);
+print_data(list,n);
+
+return 0;
 }
