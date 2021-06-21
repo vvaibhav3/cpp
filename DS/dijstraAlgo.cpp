@@ -91,7 +91,7 @@ void graph<T>::dijstraAlgo(T startnode,T endnode){
 
 	while(!sorted_dist.empty()){
 
-		//getting node to traverse adjlist
+        //getting next node with shortest distance to traverse adjlist
 		auto temp=*sorted_dist.begin();
 		T nextNode=temp.second;
 		int nextNodeDist=temp.first;
