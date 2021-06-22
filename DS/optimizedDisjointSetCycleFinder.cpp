@@ -33,7 +33,7 @@ void unionOp(int e1,int e2){
     int ap2=find(e2);
     
     //check ranks of both absolute parent whichever is min that points to another
-    //if same rank parent of ap1 to ap2 i.e. ap1 points to ap2
+    //if same rank parent of ap1 to ap2 i.e. ap1 points to ap2 and rank of new parent will be incr by 1
     if(diset[ap1].rank<diset[ap2].rank)
         diset[ap1].parent=ap2;
     else if(diset[ap1].rank>diset[ap2].rank)
