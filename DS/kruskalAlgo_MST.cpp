@@ -85,7 +85,11 @@ bool isCycle(vector<pair<int,int>> edgeList){
 }
 
 void kruskalAlgo(int v,vector<edge> edgeList){
+
+    //sorting edgeList using own comparator
     sort(edgeList.begin(),edgeList.end(),comparator);
+
+    //for printing mst
     vector<pair<int,int>> path;
 
     int i=0;
