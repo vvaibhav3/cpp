@@ -19,10 +19,10 @@ public:
     void showAdjList();
 
     //depth first search
-    void dfs(T,int&,vector<T>&,vector<T>&,vector<T>&,vector<T>&);
+    void dfs(T,int&,vector<T>&,vector<T>&,vector<T>&,unordered_map<T,T>&);
 
-    //tarjan's algo - O(v+e) for finding articulation point
-    //articulation point - removing vertex increases no of components in graph 
+    //tarjan's algo - O(v+e) for finding bridges
+    //bridge - removing edge increases no of components
     void tarjansAlgo();
 };
 
@@ -80,83 +80,62 @@ void graph<T>::showAdjList()
 }
 
 template<typename T>
-void graph<T>::dfs(T node,int &time,vector<T> &parent,vector<T> &disc,vector<T> &low,vector<T> &artPts){
-    
+void graph<T>::dfs(T node,int &time,vector<T> &parent,vector<T> &disc,vector<T> &low,unordered_map<T,T> &bridges){
+
     disc[node]=time;
     low[node]=time;
-    time+=1;
+    time++;
 
-    //children counter to count no of child of nodes
-    int child=0;
-    
     //to check if subgraph has back edge
-    int flag=1;
+    bool flag=true;
 
-    //cout<<node<<endl;
     for(auto nodes:adjList[node]){
-        //if node is not visited then
+        //if node is not visited then perform dfs and update low
         if(disc[nodes.first]==-1){
-            //updating parent of node
             parent[nodes.first]=node;
-            // perform dfs 
-            dfs(nodes.first,time,parent,disc,low,artPts);
-            //update low and child count
+            dfs(nodes.first,time,parent,disc,low,bridges);
             low[node]=min(low[nodes.first],low[node]);
-            child+=1;
         }
         else if(parent[node]!=nodes.first){
             //if node is not parent and already visited then there is back edge
             low[node]=min(low[node],disc[nodes.first]);
             //flag false since back edge
-            flag=0;
+            flag=false;
         }
 
         //if node u subgraph has no back edge then check disc<low if true then bride found 
-        if(disc[node]<low[nodes.first] && flag!=0){
-            flag+=1;
-            //cout<<node<<"\t"<<flag<<endl;
+        if(disc[node]<low[nodes.first] & flag){
+            bridges.insert({node,nodes.first});
         }
     }
-
-    // cout<<"low : \n";
-    // for(auto l:low){
-    //     cout<<l<<"\t";
-    // }
-    // cout<<endl;
-    //Case -1 if node is root and child > 1 then node is articulation point
-    //Case -2 if node is not root and disc[node]<low[child-nodes] then node is articulation point
-    if(parent[node]==-1 and child>1){
-        artPts.push_back(node);
-    }
-    else if(flag>=2){
-        artPts.push_back(node);
-    }
-
-    flag=0;
 }
 
 template<typename T>
 void graph<T>::tarjansAlgo(){
-    vector<T> parent(V,-1);
-    vector<T> disc(V,-1);
-    vector<T> low(V,-1);
-    vector<T> artPts;
-    int time=0;
+  
+  vector<T> parent(V,-1);
+  vector<T> disc(V,-1);
+  vector<T> low(V,-1);
 
-    //startnode is 0 since we are working root node so it is required
-    dfs(0,time,parent,disc,low,artPts);
+  //to store edges
+  unordered_map<T,T> bridges;
+  int time=0;
 
-    //printing all AP
-    cout<<"Articulation points are : \n";
-    for(auto ap:artPts){
-        cout<<ap<<"\t";
-    }
-    cout<<endl;
-    
-    if(artPts.size()==0){
-        cout<<"No articulation point...\n";
-    }
+  for(auto nodes:adjList){
+      if(disc[nodes.first]==-1)
+        dfs(nodes.first,time,parent,disc,low,bridges);
+  }
 
+
+//printing all bridges
+cout<<"Bridges are : \n";
+  for(auto edge:bridges){
+      cout<<edge.first<<" -- "<<edge.second<<endl;
+  }
+
+  if(bridges.size()==0){
+      cout<<"No bridges...\n";
+  }
 }
 
 int main()
