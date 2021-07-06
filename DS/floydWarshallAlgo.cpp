@@ -13,7 +13,7 @@ void floydWarshallAlgo(vector<vector<int>> &adjMatrix){
             for(int j=0;j<dist.size();j++){ //for every Kth vertex col
                 
                 //if any of the distance is infinity then keep distance as it is prev
-                if(dist[i][k]==INT_MAX or dist[k][j]==INT_MAX)
+                if(dist[i][k]==INT_MAX or dist[k][j]==INT_MAX or i==j)
                     continue;
                 
                 //now min(dist[i][j],dist[i][k]+dist[k][j])
