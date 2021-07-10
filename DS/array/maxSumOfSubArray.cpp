@@ -37,7 +37,7 @@ int main(int argc, char const *argv[])
 {
     cout<<"Input : \n";
     cout<<"First line will contain 2 integer N - size of array and K - size of subarray \n";
-    cout<<"Second line will contain N elements of array";
+    cout<<"Second line will contain N elements of array\n";
 
     int N,K;
     cin>>N>>K;
