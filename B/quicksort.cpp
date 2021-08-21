@@ -9,6 +9,9 @@ void quick_sort(int data[],int l,int h){
 	start=l;
 	end=h;
 	pvt=start;
+	
+	
+	// cout<<"\nend : "<<h<<" : "<<l<<"\n";
 	while(start<end){
 
 		while(data[start]<=data[pvt]){
@@ -24,16 +27,18 @@ void quick_sort(int data[],int l,int h){
 			data[start]=data[end];
 			data[end]=temp;
 		}
-		print_data(data,h);
+	
 	}
+
 
 	if(l<h){
 
 	temp=data[end];
 	data[end]=data[pvt];
 	data[pvt]=temp;
-	//cout<<"\nend : "<<end<<" : "<<data[end]<<"\n";
+	// print_data(data,h);
 	quick_sort(data,l,end-1);
+	// print_data(data,h);
 	quick_sort(data,end+1,h);
 
 	}

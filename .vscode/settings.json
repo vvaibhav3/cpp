@@ -2,6 +2,10 @@
     "files.associations": {
         "*.js": "javascriptreact",
         "iostream": "cpp",
-        "*.tcc": "cpp"
-    }
+        "*.tcc": "cpp",
+        "vector": "cpp",
+        "xstring": "cpp",
+        "xutility": "cpp"
+    },
+    "C_Cpp.errorSquiggles": "Disabled"
 }

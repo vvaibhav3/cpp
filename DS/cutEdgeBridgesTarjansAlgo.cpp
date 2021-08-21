@@ -104,7 +104,7 @@ void graph<T>::dfs(T node,int &time,vector<T> &parent,vector<T> &disc,vector<T> 
         }
 
         //if node u subgraph has no back edge then check disc<low if true then bride found 
-        if(disc[node]<low[nodes.first] & flag){
+        if(disc[node]<low[nodes.first] && flag){
             bridges.insert({node,nodes.first});
         }
     }
